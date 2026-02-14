@@ -62,7 +62,7 @@ The system uses the following MQTT topic structure:
 
 Access the real-time monitoring dashboard at:
 ```
-http://localhost:8000
+http://157.173.101.159:8080
 ```
 
 The dashboard displays:
@@ -73,12 +73,12 @@ The dashboard displays:
 ## Network Configuration
 
 ### MQTT Broker
-- **IP Address**: 10.12.73.101
+- **IP Address**: 157.173.101.159
 - **Port**: 1883
 - **Protocol**: MQTT
 
 ### WebSocket Server
-- **IP Address**: 0.0.0.0 (all interfaces)
+- **IP Address**: 157.173.101.159
 - **Port**: 9002
 - **Protocol**: WebSocket
 
@@ -126,8 +126,7 @@ pip install opencv-python paho-mqtt websockets
    - Ensure WiFi credentials are configured
 
 5. **Access Dashboard**
-   - Open `dashboard/index.html` in web browser
-   - Or serve via HTTP server: `python -m http.server 8000`
+   - Open dashboard at: http://157.173.101.159:8080
 
 ## Technical Specifications
 

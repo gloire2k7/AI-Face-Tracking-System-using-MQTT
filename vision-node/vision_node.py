@@ -5,7 +5,7 @@ import time
 
 # ========== CONFIG ==========
 TEAM_ID = "team05"
-BROKER_IP = "10.12.73.101"
+BROKER_IP = "157.173.101.159"
 BROKER_PORT = 1883
 
 TOPIC = f"vision/{TEAM_ID}/movement"
@@ -36,7 +36,10 @@ while True:
     ret, frame = cap.read()
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-    faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+    faces = face_cascade.detectMultiScale(gray, 1.1, 3)
+    
+    # Debug: print detection info
+    print(f"Detected {len(faces)} faces")
 
     status = "NO_FACE"
     confidence = 0.0

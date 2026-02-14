@@ -5,7 +5,7 @@ import json
 
 TEAM_ID = "team05"
 MQTT_TOPIC = f"vision/{TEAM_ID}/movement"
-MQTT_BROKER = "localhost"
+MQTT_BROKER = "157.173.101.159"
 
 connected_clients = set()
 

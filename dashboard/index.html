@@ -1,28 +1,286 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Vision Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Tracking Control System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #1e293b;
+        }
+
+        .container {
+            background: white;
+            border-radius: 24px;
+            padding: 32px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            max-width: 420px;
+            width: 90%;
+        }
+
+        .header {
+            margin-bottom: 28px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 600;
+            color: #0f172a;
+            margin-bottom: 4px;
+            letter-spacing: -0.5px;
+        }
+
+        .header p {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            background: #f8fafc;
+            border-radius: 16px;
+            margin-bottom: 24px;
+        }
+
+        .connection-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .connection-dot.connected {
+            background: #22c55e;
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);
+        }
+
+        .connection-dot.disconnected {
+            background: #ef4444;
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+        }
+
+        .connection-text {
+            font-size: 14px;
+            font-weight: 500;
+            color: #334155;
+        }
+
+        .status-container {
+            background: #f8fafc;
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 24px;
+            transition: background-color 0.3s ease;
+        }
+
+        .status-container.centered { background: #f0fdf4; }
+        .status-container.left { background: #eff6ff; }
+        .status-container.right { background: #fff7ed; }
+        .status-container.no-face { background: #fef2f2; }
+
+        .status-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: #64748b;
+            letter-spacing: 0.3px;
+            margin-bottom: 8px;
+        }
+
+        .status-value {
+            font-size: 32px;
+            font-weight: 600;
+            color: #0f172a;
+            margin-bottom: 16px;
+        }
+
+        .centered .status-value { color: #166534; }
+        .left .status-value { color: #1e40af; }
+        .right .status-value { color: #9a3412; }
+        .no-face .status-value { color: #991b1b; }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .metric-card {
+            background: #f8fafc;
+            border-radius: 16px;
+            padding: 16px;
+        }
+
+        .metric-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: #64748b;
+            letter-spacing: 0.3px;
+            margin-bottom: 8px;
+        }
+
+        .metric-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: #0f172a;
+            margin-bottom: 8px;
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #3b82f6;
+            border-radius: 6px;
+            transition: width 0.3s ease;
+        }
+
+        .timestamp {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Face Tracking Status</h1>
-    <h2 id="status">Waiting...</h2>
-    <h3 id="confidence"></h3>
-    <h4 id="timestamp"></h4>
+    <div class="container">
+        <div class="header">
+            <h1>Face Tracking</h1>
+            <p>Vision control system</p>
+        </div>
+
+        <div class="connection-status">
+            <div class="connection-dot disconnected" id="connectionDot"></div>
+            <span class="connection-text" id="connectionText">Connecting...</span>
+        </div>
+
+        <div class="status-container" id="statusContainer">
+            <div class="status-label">Tracking Status</div>
+            <div class="status-value" id="status">Initializing</div>
+            
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-label">Confidence</div>
+                    <div class="metric-value" id="confidence">--%</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="confidenceBar" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Last Update</div>
+                    <div class="metric-value" id="timestamp">--:--:--</div>
+                    <div class="timestamp">HH:MM:SS</div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
-const ws = new WebSocket("ws://localhost:9002");
+        const ws = new WebSocket("ws://157.173.101.159:9002");
+        const statusElement = document.getElementById("status");
+        const confidenceElement = document.getElementById("confidence");
+        const confidenceBarElement = document.getElementById("confidenceBar");
+        const timestampElement = document.getElementById("timestamp");
+        const statusContainer = document.getElementById("statusContainer");
+        const connectionDot = document.getElementById("connectionDot");
+        const connectionText = document.getElementById("connectionText");
+
+        function updateConnectionStatus(connected) {
+            if (connected) {
+                connectionDot.className = 'connection-dot connected';
+                connectionText.textContent = 'Connected';
+            } else {
+                connectionDot.className = 'connection-dot disconnected';
+                connectionText.textContent = 'Disconnected';
+            }
+        }
+
+        function formatTimestamp(timestamp) {
+            const date = new Date(timestamp * 1000);
+            return date.toLocaleTimeString('en-US', { 
+                hour12: false,
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+        }
+
+        function updateStatusContainer(status) {
+            statusContainer.className = 'status-container';
+            
+            switch(status) {
+                case 'CENTERED':
+                    statusContainer.classList.add('centered');
+                    break;
+                case 'MOVE_LEFT':
+                    statusContainer.classList.add('left');
+                    break;
+                case 'MOVE_RIGHT':
+                    statusContainer.classList.add('right');
+                    break;
+                case 'NO_FACE':
+                    statusContainer.classList.add('no-face');
+                    break;
+            }
+        }
+
+        ws.onopen = function() {
+            updateConnectionStatus(true);
+        };
+
+        ws.onclose = function() {
+            updateConnectionStatus(false);
+            statusElement.textContent = "Disconnected";
+            confidenceElement.textContent = "--%";
+            confidenceBarElement.style.width = "0%";
+        };
+
+        ws.onerror = function() {
+            updateConnectionStatus(false);
+        };
 
         ws.onmessage = function(event) {
-            const data = JSON.parse(event.data);
-
-            document.getElementById("status").innerText =
-                "Status: " + data.status;
-
-            document.getElementById("confidence").innerText =
-                "Confidence: " + data.confidence;
-
-            document.getElementById("timestamp").innerText =
-                "Timestamp: " + data.timestamp;
+            try {
+                const data = JSON.parse(event.data);
+                
+                // Update status
+                let displayStatus = data.status.replace('_', ' ').toLowerCase();
+                displayStatus = displayStatus.charAt(0).toUpperCase() + displayStatus.slice(1);
+                statusElement.textContent = displayStatus;
+                
+                // Update status container styling
+                updateStatusContainer(data.status);
+                
+                // Update confidence
+                const confidencePercent = Math.round(data.confidence * 100);
+                confidenceElement.textContent = confidencePercent + "%";
+                confidenceBarElement.style.width = confidencePercent + "%";
+                
+                // Update timestamp
+                timestampElement.textContent = formatTimestamp(data.timestamp);
+                
+            } catch (error) {
+                console.error("Error parsing message:", error);
+            }
         };
     </script>
 </body>

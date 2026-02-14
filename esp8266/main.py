@@ -5,12 +5,12 @@ from machine import Pin, PWM
 import json
 
 # WIFI
-SSID = "Wireless1"
-PASSWORD = "@RcaNyabihu2023"
+SSID = "RCA-OUTDOOR-5Ghz"
+PASSWORD = "RCA@2025"
 
 # MQTT
 TEAM_ID = "team05"
-BROKER = "10.12.73.101"
+BROKER = "157.173.101.159"
 TOPIC = b"vision/team05/movement"
 
 # Connect WiFi
